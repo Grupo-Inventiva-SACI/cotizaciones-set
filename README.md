@@ -111,3 +111,7 @@ En Linux:
 ```
 
 El binario tampoco utiliza argumentos de línea de comandos; debe ejecutarse sin parámetros adicionales.
+
+## Autores
+
+- [@Ramphire](https://github.com/Ramphire)
