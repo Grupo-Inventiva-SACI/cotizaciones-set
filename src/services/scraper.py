@@ -36,7 +36,7 @@ CURRENT_MONTH = date.today().strftime("%m")
 BASE_URL = "https://www.dnit.gov.py"
 URL = f"{BASE_URL}/web/portal-institucional/cotizaciones"
 
-
+# Sección Principal donde obtiene el HTML.
 def get_sections():
     sections = {}
     soup = get_soup(URL)
@@ -67,8 +67,12 @@ def get_sections():
 
     return sections
 
-
+# Formatea y normaliza las cotizaciones.
 def get_rates(soup, year="2022", month="03"):
+    """ 
+    Formatea y normaliza las cotizaciones, recibiendo parámetros **soup**, **year** y **month**
+    para aplicar el filtro correspondiente del resultado esperado.
+    """
     rates = {}
     scheme = {
         "day": {"purchase": None, "sale": None, "cols": (0,)},
@@ -80,12 +84,21 @@ def get_rates(soup, year="2022", month="03"):
         "gbp": {"purchase": 11, "sale": 12, "cols": (11, 12)},
     }
     date = None
+
+    # Valida requests del soup
     if soup:
-        table = soup[0]
-        tbody = table.select("tbody")[0]
-        rows = tbody.select("tr")
+
+        table = soup[0] # Definimos la tabla
+        tbody = table.select("tbody")[0] # Definimos el cuerpo de la tabla
+        rows = tbody.select("tr") # Filas
+
+        # La tabla representaría el mes en sí.
+        # Mientras que las filas representan los días del mes
+        # y las columnas las monedas, las sub columnas serían "compra" y "venta"
+        # Ej: la columna "USD": {"compra", "venta"}
+
         for row in rows:
-            cols = row.select("td")
+            cols = row.select("td") # Columnas de las filas
             # Removing extra columns without data:
             # like https://www.set.gov.py/portal/PARAGUAY-SET/detail?folder-id=repository:collaboration:/sites/PARAGUAY-SET/categories/SET/Informes%20Periodicos/cotizaciones-historicos/2016/h-mes-de-agosto&content-id=/repository/collaboration/sites/PARAGUAY-SET/documents/informes-periodicos/cotizaciones/2016/H_-_Mes_de_Agosto
             cols = [c for c in cols if len(c.getText().strip()) > 0]
@@ -112,13 +125,19 @@ def get_rates(soup, year="2022", month="03"):
                         rates[date][currency]["sale"] = value
     return rates
 
-
+# Actualiza el archivo JSON principal.
 def update_sourcejson(data):
+    """ 
+        Actualiza el archivo JSON principal
+    """
     with open(SOURCEJSON_URL, "w") as f:
         f.write(json.dumps(data))
 
-
+# Obtiene los datos del JSON principal.
 def get_sourcejson():
+    """ 
+        Obtiene los datos del JSON principal.
+    """
     try:
         with open(SOURCEJSON_URL, "r") as f:
             return json.loads(f.read())
@@ -155,7 +174,7 @@ def get_last_month_processed():
     last = months[-1:][0]
     return last if last < 12 else 1
 
-
+# Almacena en archivo JSON.
 def save(rates, year, month):
     latest = None
     year_path = os.path.join(DATA_DIR, year)
@@ -185,6 +204,7 @@ def save(rates, year, month):
         with open(os.path.join(DATA_DIR, "latest.json"), "w") as f:
             f.write(json.dumps(latest, cls=DecimalEncoder))
 
+# Almacena en la Base de datos
 def savedb(rates, year, month):
     print("savedb...")
     latest = None
@@ -213,8 +233,11 @@ def savedb(rates, year, month):
             r_msj = db.ejecutar_procedimiento("WSP_TIPOS_CAMBIOS_SET", j_body)
             print(r_msj)
 
-
+# Ejecución principal del proyecto
 def run():
+    """ 
+        Ejecución principal del scrapper. 
+    """
     new_source = get_sections()
     current_source = get_sourcejson()
     for year in new_source.keys():
