@@ -18,9 +18,25 @@ El objetivo de almacenar en la DB es contar con un histórico de estas tasas de 
 
 Se comparte un script PL/SQL de ejemplo para enfocar el desarrollo del procedimiento [WSP_TIPOS_CAMBIOS_SET](scripts/oracle/WSP_TIPOS_CAMBIOS_SET.pls) .
 
+## Descargas
 
+Para las descargas de las versiones correspondientes consulte: **[cotizaciones-set](https://github.com/Grupo-Inventiva-SACI/cotizaciones-set/releases)**
 
-## Requisitos
+Se espera que la app esté dentro de una carpeta con la siguiente estructura:
+
+```text
+cotizaciones-set/
+├── cotizaciones-set.exe  # En Linux, sin extensión
+├── .env
+├── source.json
+└── data/
+```
+
+## Uso del ejecutable.
+
+El uso de la app es sencillo, no requiere ningun argumento y se puede ejecutar por línea de comando, por lo que permite realizar tareas programadas para su ejecución, o en caso de linux "crontab" (u otros). Esta app siempre estará devolviendo la última tasa de cambio de la DNIT.
+
+## Requisitos (Source)
 
 - Python 3.9 o superior (se recomienda Python 3.12).
 - Acceso HTTPS a `https://www.dnit.gov.py`.
