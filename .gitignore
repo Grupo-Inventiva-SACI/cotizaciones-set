@@ -6,4 +6,3 @@ dist/
 logs/
 *.exe
 data/
-*.spec
