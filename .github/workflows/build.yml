@@ -1,0 +1,86 @@
+name: Compilar ejecutables
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  linux-el8-x64:
+    name: Linux EL8 x64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v6
+
+      - name: Compilar dentro de Red Hat UBI 8
+        shell: bash
+        run: |
+          docker run --rm \
+            --user 0:0 \
+            -e HOME=/tmp \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -w /workspace \
+            registry.access.redhat.com/ubi8/python-312:latest \
+            bash -lc '
+              python -m pip install --disable-pip-version-check -r requirements.txt &&
+              python -m PyInstaller --clean cotizaciones-set.spec
+            '
+
+      - name: Verificar ejecutable
+        shell: bash
+        run: |
+          file dist/cotizaciones-set
+          ldd dist/cotizaciones-set
+
+      - name: Empaquetar ejecutable Linux
+        shell: bash
+        run: |
+          tar -C dist -czf cotizaciones-set-linux-el8-x64.tar.gz cotizaciones-set
+
+      - name: Subir ejecutable Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: cotizaciones-set-linux-el8-x64
+          path: cotizaciones-set-linux-el8-x64.tar.gz
+          if-no-files-found: error
+
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-2022
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v6
+
+      - name: Instalar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: "x64"
+          cache: "pip"
+
+      - name: Instalar dependencias
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Compilar ejecutable Windows
+        run: python -m PyInstaller --clean cotizaciones-set.spec
+
+      - name: Verificar ejecutable
+        shell: powershell
+        run: |
+          if (-not (Test-Path "dist/cotizaciones-set.exe")) {
+            throw "No se generó dist/cotizaciones-set.exe"
+          }
+
+      - name: Subir ejecutable Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: cotizaciones-set-windows-x64
+          path: dist/cotizaciones-set.exe
+          if-no-files-found: error
